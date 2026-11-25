@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AI SAFE — Лаборатория доказательств</title>
+<style>
+  :root{
+    --bg:#07101f; --bg2:#0d1b31; --card:#132642; --line:#244266;
+    --text:#eaf4ff; --muted:#8fa8c4; --cyan:#22d3ee; --green:#34d399;
+    --red:#fb7185; --gold:#fbbf24; --shadow:0 18px 45px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%;background:radial-gradient(circle at 20% 0%,#123059 0%,var(--bg) 55%);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+  body{padding:14px;display:flex;justify-content:center}
+  #app{width:min(1100px,100%);display:flex;flex-direction:column;gap:14px}
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;background:linear-gradient(135deg,#102747,#0a1629);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)}
+  .brand{display:flex;align-items:center;gap:12px;min-width:0}
+  .logo{width:44px;height:44px;border-radius:13px;background:linear-gradient(145deg,var(--cyan),#2563eb);display:grid;place-items:center;font-size:24px;flex:0 0 auto}
+  .brand b{display:block;font-size:18px;letter-spacing:.4px;white-space:nowrap}
+  .brand span{display:block;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .stats{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+  .pill{background:#0a1830;border:1px solid var(--line);border-radius:999px;padding:8px 12px;font-size:13px;white-space:nowrap}
+  .pill b{color:var(--cyan)}
+  .sound{cursor:pointer;user-select:none}
+  .screen{display:none;animation:fade .35s ease}
+  .screen.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .hero{background:linear-gradient(160deg,#12294b,#0a172b);border:1px solid var(--line);border-radius:22px;padding:28px;box-shadow:var(--shadow)}
+  .eyebrow{display:inline-block;color:var(--cyan);font-weight:700;font-size:12px;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px}
+  h1{margin:0 0 10px;font-size:clamp(28px,5vw,46px);line-height:1.05}
+  h2{margin:0 0 12px;font-size:clamp(22px,4vw,32px)}
+  .lead{margin:0;color:#c4d8ef;font-size:16px;line-height:1.55;max-width:760px}
+  .rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:22px 0}
+  .rule{background:#0b1a32;border:1px solid var(--line);border-radius:16px;padding:16px}
+  .rule .ic{font-size:26px;margin-bottom:8px}
+  .rule b{display:block;margin-bottom:4px}
+  .rule p{margin:0;color:var(--muted);font-size:13px;line-height:1.45}
+  .btn{border:0;border-radius:14px;padding:14px 20px;font-size:15px;font-weight:750;cursor:pointer;color:#04121f;background:linear-gradient(135deg,var(--cyan),#60a5fa);box-shadow:0 10px 25px rgba(34,211,238,.18);transition:.15s}
+  .btn:hover{transform:translateY(-2px);filter:brightness(1.08)}
+  .btn.secondary{background:#16304f;color:var(--text);border:1px solid var(--line);box-shadow:none}
+  .case-head{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;padding:16px 18px;background:#0d1e38;border:1px solid var(--line);border-radius:18px}
+  .packet{font-weight:750;color:#dbeafe}
+  .packet small{display:block;color:var(--muted);font-weight:400;margin-top:3px}
+  .upload{height:6px;border-radius:99px;background:#142944;overflow:hidden;min-width:180px;flex:1}
+  .upload i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--green));transition:width .7s ease}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:800px){.grid{grid-template-columns:1fr}.topbar{flex-wrap:wrap}.stats{justify-content:flex-start}}
+  .card{background:linear-gradient(160deg,#112747,#0b1a31);border:1px solid var(--line);border-radius:20px;padding:18px;box-shadow:var(--shadow);min-width:0}
+  .card h3{margin:0 0 14px;font-size:16px;display:flex;align-items:center;gap:8px}
+  .phone{background:#e8eef5;border-radius:24px;padding:12px;color:#102039;box-shadow:inset 0 0 0 6px #0b1423,0 14px 30px rgba(0,0,0,.3)}
+  .notch{width:80px;height:8px;border-radius:99px;background:#0b1423;margin:0 auto 10px}
+  .appbar{display:flex;justify-content:space-between;align-items:center;background:#fff;border-radius:12px;padding:10px 12px;margin-bottom:10px;font-weight:800;font-size:13px;box-shadow:0 2px 8px rgba(16,32,57,.08)}
+  .appbar span:last-child{font-weight:500;color:#64748b}
+  .ev-line{border:1px solid #cbd5e1;background:#fff;border-radius:11px;padding:11px 12px;margin:8px 0;font-size:14px;line-height:1.35;cursor:pointer;transition:.12s;user-select:none}
+  .ev-line:hover{border-color:#94a3b8;transform:translateX(2px)}
+  .ev-line.red{background:#fff1f2;border-color:var(--red);color:#9f1239}
+  .ev-line.green{background:#ecfdf5;border-color:var(--green);color:#065f46}
+  .ev-line.wrong{background:#f1f5f9;border-color:#94a3b8;color:#64748b;text-decoration:line-through}
+  .ev-line .tag{float:right;font-size:11px;font-weight:800;margin-left:8px}
+  .play{width:100%;border:1px solid #31527f;background:#102844;color:var(--text);border-radius:14px;padding:14px;font-weight:750;cursor:pointer;font-size:15px}
+  .wave{display:flex;align-items:flex-end;gap:3px;height:54px;margin:14px 0;padding:0 4px}
+  .wave i{flex:1;background:linear-gradient(180deg,var(--cyan),#2563eb);border-radius:3px;height:14%;opacity:.55;transition:height .12s}
+  .wave.playing i{animation:pulse .8s ease-in-out infinite alternate;opacity:1}
+  .wave.playing i:nth-child(3n){animation-delay:.12s}.wave.playing i:nth-child(4n){animation-delay:.24s}
+  @keyframes pulse{from{height:16%}to{height:95%}}
+  .transcript{margin-top:10px}
+  .transcript .ev-line{background:#0f2039;border-color:#27456d;color:#dbeafe}
+  .transcript .ev-line.red{background:#3b1220;border-color:var(--red);color:#fecdd3}
+  .transcript .ev-line.green{background:#0c2f28;border-color:var(--green);color:#a7f3d0}
+  .transcript .ev-line.wrong{background:#15263e;border-color:#64748b;color:#94a3b8}
+  .locked{opacity:.42;pointer-events:none}
+  .verdict{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px}
+  @media(max-width:600px){.verdict{grid-template-columns:1fr}}
+  .verdict button{border-radius:16px;padding:16px;font-weight:800;font-size:15px;cursor:pointer;border:2px solid transparent;transition:.15s}
+  .verdict button:hover{transform:translateY(-2px)}
+  .v-scam{background:#3b1220;color:#fecdd3;border-color:#7f1d2e!important}
+  .v-safe{background:#0c2f28;color:#a7f3d0;border-color:#065f46!important}
+  .feedback{margin-top:14px;border-radius:16px;padding:16px;background:#0d203b;border:1px solid var(--line);line-height:1.5}
+  .feedback b{color:var(--gold)}
+  .next{display:flex;justify-content:flex-end;margin-top:14px}
+  .final{text-align:center;padding:36px 20px}
+  .score-big{font-size:clamp(44px,9vw,78px);font-weight:900;color:var(--cyan);line-height:1;margin:12px 0}
+  .badge{display:inline-block;padding:8px 16px;border-radius:99px;background:#123a52;color:#a7f3d0;font-weight:800;margin-bottom:12px}
+  .foot{color:#6f89a8;font-size:12px;text-align:center;padding:6px 0 18px}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#0b1a30;border:1px solid var(--line);padding:10px 16px;border-radius:99px;color:var(--text);font-weight:700;opacity:0;transition:.2s;pointer-events:none;z-index:10}
+  .toast.show{opacity:1;bottom:34px}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">🤖</div>
+      <div><b>AI SAFE · Лаборатория доказательств</b><span>Ты — бот. Тебе присылают скриншоты и записи звонков.</span></div>
+    </div>
+    <div class="stats">
+      <div class="pill">Счёт <b id="score">0</b></div>
+      <div class="pill">Жизни <b id="lives">♥♥♥</b></div>
+      <div class="pill" id="progressPill">Пакет 0/8</div>
+      <div class="pill sound" id="soundBtn" role="button" tabindex="0">🔊 Звук вкл.</div>
+    </div>
+  </header>
+
+  <section class="screen active" id="intro">
+    <div class="hero">
+      <div class="eyebrow">Новая смена · AI Safe 2</div>
+      <h1>Определи мошенника по файлам</h1>
+      <p class="lead">Пользователи загружают тебе скриншоты экранов и записи телефонных разговоров. Твоя задача — отметить подозрительные приёмы, заметить признаки «своего» и вынести вердикт: заблокировать или пропустить.</p>
+      <div class="rules">
+        <div class="rule"><div class="ic">🖼️</div><b>1. Изучи скриншот</b><p>Нажимай на красные приёмы обмана и зелёные сигналы доверия прямо на экране.</p></div>
+        <div class="rule"><div class="ic">🎧</div><b>2. Прослушай запись</b><p>Кнопка «Слушать» озвучит разговор. Затем отметь фразы в расшифровке.</p></div>
+        <div class="rule"><div class="ic">⚖️</div><b>3. Прими решение</b><p>Верный вердикт — +120. Ошибка — –100 и одна жизнь. Всего 3 жизни.</p></div>
+      </div>
+      <button class="btn" id="startBtn">Начать смену ▶</button>
+    </div>
+  </section>
+
+  <section class="screen" id="game">
+    <div class="case-head">
+      <div class="packet" id="packetTitle">Пакет 1<small></small></div>
+      <div class="upload"><i id="uploadBar"></i></div>
+    </div>
+    <div class="grid">
+      <div class="card">
+        <h3>🖼️ Скриншот экрана</h3>
+        <div class="phone" id="phone"></div>
+        <p style="color:var(--muted);font-size:12px;margin:12px 2px 0">Нажимай на строки: 🚩 приём мошенника · ✅ признак своего.</p>
+      </div>
+      <div class="card">
+        <h3>🎙️ Запись звонка</h3>
+        <button class="play" id="playBtn">▶ Слушать запись</button>
+        <div class="wave" id="wave"></div>
+        <div class="transcript locked" id="transcript"></div>
+        <p style="color:var(--muted);font-size:12px;margin:12px 2px 0">Расшифровка появится после прослушивания.</p>
+      </div>
+    </div>
+    <div class="verdict">
+      <button class="v-scam" id="scamBtn">🚩 Мошенник — блокировать</button>
+      <button class="v-safe" id="safeBtn">✅ Свой — пропустить</button>
+    </div>
+    <div class="feedback" id="feedback" hidden></div>
+    <div class="next"><button class="btn" id="nextBtn" hidden>Следующий пакет ▶</button></div>
+  </section>
+
+  <section class="screen" id="result">
+    <div class="card final">
+      <div class="badge" id="rank">АНАЛИТИК</div>
+      <h2>Смена завершена</h2>
+      <div class="score-big" id="finalScore">0</div>
+      <p class="lead" id="finalText" style="margin:0 auto 22px"></p>
+      <button class="btn" id="againBtn">Играть снова ↻</button>
+    </div>
+  </section>
+  <div class="foot">AI SAFE · все файлы и голоса в игре вымышлены · звук можно выключить кнопкой 🔊/🔇</div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const CASES = [
+  {
+    scam:true, sender:"Марина, 34 года", files:"screen_041.png · call_041.m4a",
+    screen:{app:"Синий Банк · Вход", lines:[
+      {t:"safe-bank-secure.ru", k:"red"},
+      {t:"Введите код из SMS, чтобы отменить списание", k:"red"},
+      {t:"Чат «поддержки» предлагает перейти по ссылке", k:"red"},
+      {t:"На экране указано имя владельца", k:"neutral"}
+    ]},
+    call:{title:"00:47", lines:[
+      {t:"Здравствуйте, я из службы безопасности банка.", k:"neutral"},
+      {t:"Срочно переведите деньги на резервный счёт.", k:"red"},
+      {t:"Никому не говорите код из SMS — это защита.", k:"green"}
+    ]},
+    why:"Поддельный домен, просьба перевести деньги и код из SMS — классическая схема. Фраза про «не говорите код» добавлена, чтобы звучать убедительно."
+  },
+  {
+    scam:false, sender:"Игорь, сотрудник банка", files:"screen_042.png · call_042.m4a",
+    screen:{app:"Синий Банк · Уведомление", lines:[
+      {t:"Официальное приложение банка", k:"green"},
+      {t:"Подозрительная операция найдена автоматически", k:"green"},
+      {t:"Перейдите в раздел «Безопасность» в приложении", k:"green"},
+      {t:"Телефон указан на обратной стороне карты", k:"green"}
+    ]},
+    call:{title:"01:12", lines:[
+      {t:"Я из службы безопасности банка, отвечаю на вашу заявку.", k:"green"},
+      {t:"Назовите только последние четыре цифры карты.", k:"green"},
+      {t:"Мы никогда не просим код из SMS или пароль.", k:"green"}
+    ]},
+    why:"Настоящий сотрудник не просит код из SMS и не требует перевода. Все действия предлагаются внутри официального приложения."
+  },
+  {
+    scam:true, sender:"Аноним, «Госуслуги»", files:"screen_043.png · call_043.m4a",
+    screen:{app:"Портал оплаты штрафов", lines:[
+      {t:"gosuslugi-police-pay.ru", k:"red"},
+      {t:"Штраф 15 000 ₽ — оплатить в течение 2 минут", k:"red"},
+      {t:"Перевод на карту физического лица", k:"red"},
+      {t:"На странице есть герб и печать", k:"neutral"}
+    ]},
+    call:{title:"00:58", lines:[
+      {t:"Вас разыскивает полиция, открыто производство.", k:"red"},
+      {t:"Никуда не ходите, всё решим по телефону.", k:"red"},
+      {t:"Пришлите копию паспорта в мессенджер.", k:"red"}
+    ]},
+    why:"Герб на картинке ничего не доказывает. Настоящие штрафы оплачиваются через официальный реестр, а не переводом на карту."
+  },
+  {
+    scam:false, sender:"Полиция, участковый", files:"screen_044.png · call_044.m4a",
+    screen:{app:"Госуслуги · Повестка", lines:[
+      {t:"Повестка пришла в личный кабинет Госуслуг", k:"green"},
+      {t:"Указаны номер дела и подпись сотрудника", k:"green"},
+      {t:"Оплата — только через официальный реестр", k:"green"},
+      {t:"Ссылка ведёт на домен gov.ru", k:"green"}
+    ]},
+    call:{title:"00:39", lines:[
+      {t:"Я участковый уполномоченный, приглашаю вас в отдел.", k:"green"},
+      {t:"Приходите лично, документы проверим при вас.", k:"green"},
+      {t:"Если сомневаетесь, перезвоните на номер из повестки.", k:"green"}
+    ]},
+    why:"Настоящий сотрудник предлагает личный визит и перезвон по официальному номеру, а не требует срочный перевод."
+  },
+  {
+    scam:true, sender:"«Техподдержка»", files:"screen_045.png · call_045.m4a",
+    screen:{app:"Системное предупреждение", lines:[
+      {t:"Установите AnyDesk для «проверки»", k:"red"},
+      {t:"Вирус найден — оплатите лицензию антивируса", k:"red"},
+      {t:"Счёт к оплате в течение 5 минут", k:"red"},
+      {t:"На экране мигает красный значок угрозы", k:"neutral"}
+    ]},
+    call:{title:"01:31", lines:[
+      {t:"Мы из техподдержки, видим вирусы на вашем компьютере.", k:"red"},
+      {t:"Установите удалённый доступ, мы всё починим.", k:"red"},
+      {t:"Оплатите лицензию картой прямо сейчас.", k:"red"}
+    ]},
+    why:"Удалённый доступ и срочная оплата «лицензии» — два главных признака ложной техподдержки."
+  },
+  {
+    scam:false, sender:"IT-отдел компании", files:"screen_046.png · call_046.m4a",
+    screen:{app:"Внутренняя система заявок", lines:[
+      {t:"Заявка №4821 создана вами сегодня", k:"green"},
+      {t:"Инженер знает номер заявки", k:"green"},
+      {t:"Ссылка ведёт на внутренний портал компании", k:"green"},
+      {t:"Просьба обновить пароль через VPN", k:"green"}
+    ]},
+    call:{title:"00:52", lines:[
+      {t:"Я из IT-отдела, отвечаю на вашу заявку №4821.", k:"green"},
+      {t:"Пароль и код из SMS сообщать не нужно.", k:"green"},
+      {t:"Откройте внутренний портал через VPN.", k:"green"}
+    ]},
+    why:"Сотрудник опирается на вашу же заявку и не просит секреты. Все ссылки — внутренние, через VPN."
+  },
+  {
+    scam:true, sender:"«Служба доставки»", files:"screen_047.png · call_047.m4a",
+    screen:{app:"Посылка задержана", lines:[
+      {t:"Оплатите таможенную пошлину картой", k:"red"},
+      {t:"Ссылка на оплату прислана в мессенджере", k:"red"},
+      {t:"Срок оплаты — 2 минуты", k:"red"},
+      {t:"Есть трек-номер посылки", k:"neutral"}
+    ]},
+    call:{title:"00:33", lines:[
+      {t:"Ваша посылка задержана на таможне.", k:"red"},
+      {t:"Переведите 890 рублей на карту.", k:"red"},
+      {t:"Не отменяйте перевод, деньги вернутся.", k:"red"}
+    ]},
+    why:"Доставка не просит предоплату переводом на карту и не торопит с «последними минутами»."
+  },
+  {
+    scam:false, sender:"Курьер, служба доставки", files:"screen_048.png · call_048.m4a",
+    screen:{app:"Официальное приложение доставки", lines:[
+      {t:"Трек-номер совпадает с вашим заказом", k:"green"},
+      {t:"Курьер привезёт сегодня с 14:00 до 15:00", k:"green"},
+      {t:"Оплата при получении, сумма в приложении", k:"green"},
+      {t:"Звонок по номеру из карточки заказа", k:"green"}
+    ]},
+    call:{title:"00:26", lines:[
+      {t:"Здравствуйте, я курьер, звоню по вашему заказу.", k:"green"},
+      {t:"Подойдёте к подъезду в 14:30?", k:"green"},
+      {t:"Если что, перезвоните в службу поддержки.", k:"green"}
+    ]},
+    why:"Курьер ссылается на реальный заказ, не просит перевод и предлагает перезвонить в поддержку."
+  }
+];
+
+let score=0, lives=3, idx=0, locked=false, marks=[], playing=false, muted=false, audioCtx=null, currentUtter=null;
+const $=id=>document.getElementById(id);
+const screens=()=>document.querySelectorAll('.screen');
+
+function show(id){screens().forEach(s=>s.classList.toggle('active',s.id===id));}
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1200);}
+function updateHUD(){
+  $('score').textContent=score;
+  $('lives').textContent='♥'.repeat(Math.max(0,lives))+'♡'.repeat(3-Math.max(0,lives));
+  $('progressPill').textContent='Пакет '+Math.min(idx+1,CASES.length)+'/'+CASES.length;
+}
+function ensureAudio(){if(!audioCtx){const AC=window.AudioContext||window.webkitAudioContext;if(AC)audioCtx=new AC();}if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume();}
+function beep(kind='click'){
+  if(muted)return; ensureAudio(); if(!audioCtx)return;
+  const t=audioCtx.currentTime, o=audioCtx.createOscillator(), g=audioCtx.createGain();
+  o.connect(g);g.connect(audioCtx.destination);
+  const map={click:[660,.06,.05],red:[180,.18,.09],green:[880,.16,.07],win:[740,.22,.08],lose:[120,.28,.1]};
+  const [f,d,v]=map[kind]||map.click; o.frequency.setValueAtTime(f,t);
+  if(kind==='win')o.frequency.exponentialRampToValueAtTime(1180,t+d);
+  if(kind==='lose')o.frequency.exponentialRampToValueAtTime(70,t+d);
+  o.type=kind==='red'||kind==='lose'?'sawtooth':'sine';
+  g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.001,t+d);
+  o.start(t);o.stop(t+d+.02);
+}
+function toggleSound(){
+  muted=!muted;
+  $('soundBtn').textContent=muted?'🔇 Звук выкл.':'🔊 Звук вкл.';
+  if(muted&&'speechSynthesis' in window)speechSynthesis.cancel();
+  beep('click');
+}
+function setLines(el,lines,src){
+  el.innerHTML='';
+  lines.forEach((ln,i)=>{
+    const d=document.createElement('div');
+    d.className='ev-line';d.dataset.src=src;d.dataset.i=i;d.textContent=ln.t;
+    d.addEventListener('click',()=>mark(d,ln));
+    el.appendChild(d);
+  });
+}
+function mark(el,ln){
+  if(locked||el.dataset.done)return;
+  el.dataset.done='1';
+  let delta=0;
+  if(ln.k==='red'){el.classList.add('red');el.insertAdjacentHTML('beforeend','<span class="tag">🚩</span>');delta=15;beep('red');}
+  else if(ln.k==='green'){el.classList.add('green');el.insertAdjacentHTML('beforeend','<span class="tag">✅</span>');delta=15;beep('green');}
+  else {el.classList.add('wrong');el.insertAdjacentHTML('beforeend','<span class="tag">?</span>');delta=-10;beep('click');}
+  score+=delta;updateHUD();toast((delta>0?'+':'')+delta+' очков');
+}
+function startCase(){
+  locked=false;marks=[];
+  const c=CASES[idx];
+  $('feedback').hidden=true;$('nextBtn').hidden=true;
+  $('packetTitle').innerHTML='Пакет '+(idx+1)+' из '+CASES.length+'<small>'+c.sender+' · '+c.files+'</small>';
+  $('phone').innerHTML='<div class="notch"></div><div class="appbar"><span>'+c.screen.app+'</span><span>●●●</span></div>';
+  const sl=document.createElement('div');$('phone').appendChild(sl);setLines(sl,c.screen.lines,'screen');
+  setLines($('transcript'),c.call.lines,'call');
+  $('transcript').classList.add('locked');
+  $('playBtn').textContent='▶ Слушать запись';$('wave').classList.remove('playing');
+  $('uploadBar').style.width='0%';
+  requestAnimationFrame(()=>{ $('uploadBar').style.width='100%'; });
+  updateHUD();
+}
+function stopPlay(){
+  playing=false;$('wave').classList.remove('playing');$('playBtn').textContent='▶ Слушать запись';
+  if('speechSynthesis' in window)speechSynthesis.cancel();currentUtter=null;
+}
+function toneFallback(done){
+  if(muted){done();return;}
+  ensureAudio();
+  if(!audioCtx){done();return;}
+  const t0=audioCtx.currentTime;
+  [220,330,440,330].forEach((f,i)=>{
+    const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+    o.connect(g);g.connect(audioCtx.destination);o.frequency.value=f;o.type='triangle';
+    const s=t0+i*.18;g.gain.setValueAtTime(.0001,s);g.gain.exponentialRampToValueAtTime(.07,s+.02);g.gain.exponentialRampToValueAtTime(.0001,s+.16);
+    o.start(s);o.stop(s+.18);
+  });
+  setTimeout(done,760);
+}
+function playCall(){
+  if(playing){stopPlay();return;}
+  const c=CASES[idx];
+  $('transcript').classList.remove('locked');
+  playing=true;$('wave').classList.add('playing');$('playBtn').textContent='■ Стоп';
+  const finish=()=>{ if(!playing)return; playing=false;$('wave').classList.remove('playing');$('playBtn').textContent='▶ Слушать ещё раз';currentUtter=null; };
+  if(!muted&&'speechSynthesis' in window){
+    try{
+      speechSynthesis.cancel();
+      const u=new SpeechSynthesisUtterance(c.call.lines.map(l=>l.t).join('. '));
+      u.lang='ru-RU';u.rate=.96;u.pitch=1;
+      const voices=speechSynthesis.getVoices()||[];
+      const ru=voices.find(v=>(v.lang||'').toLowerCase().startsWith('ru'));
+      if(ru)u.voice=ru;
+      u.onend=finish;u.onerror=finish;currentUtter=u;
+      speechSynthesis.speak(u);
+      setTimeout(()=>{if(playing&&speechSynthesis.speaking===false)toneFallback(finish);},1400);
+      return;
+    }catch(e){}
+  }
+  toneFallback(finish);
+}
+function verdict(scam){
+  if(locked)return;locked=true;stopPlay();
+  const c=CASES[idx], right=(scam===c.scam);
+  let d=right?120:-100;
+  if(!right)lives--;
+  score+=d;updateHUD();beep(right?'win':'lose');
+  const f=$('feedback');f.hidden=false;
+  f.innerHTML='<b>'+(right?'Верно! +120':'Ошибка. –100 и одна жизнь')+'</b><br>'+
+    'Правильный ответ: <b>'+(c.scam?'🚩 Мошенник':'✅ Свой')+'</b>. '+c.why+
+    '<br><span style="color:var(--muted)">Красные флаги и зелёные сигналы, которые ты отметил, уже учтены в счёте.</span>';
+  $('nextBtn').hidden=false;
+  $('nextBtn').textContent=idx===CASES.length-1?'Показать результат ▶':'Следующий пакет ▶';
+}
+function nextCase(){
+  if(idx>=CASES.length-1){finish();return;}
+  idx++;startCase();
+}
+function finish(){
+  stopPlay();show('result');
+  $('finalScore').textContent=score;
+  const rank=score>=900?'ЭКСПЕРТ':score>=650?'АНАЛИТИК':score>=350?'СТАЖЁР':'НОВИЧОК';
+  $('rank').textContent=rank;
+  $('finalText').textContent='Ты разобрал '+CASES.length+' пакетов и набрал '+score+' очков. Осталось жизней: '+Math.max(0,lives)+'. '+
+    (score>=650?'Отличная работа — ты надёжно отличаешь приёмы обмана от настоящих сотрудников.':'Повтори смену: обращай внимание на домены, просьбы перевести деньги и коды из SMS.');
+}
+function reset(){
+  score=0;lives=3;idx=0;stopPlay();updateHUD();show('game');startCase();
+}
+$('startBtn').onclick=()=>{ensureAudio();beep('click');reset();};
+$('againBtn').onclick=()=>{beep('click');reset();};
+$('playBtn').onclick=playCall;
+$('scamBtn').onclick=()=>verdict(true);
+$('safeBtn').onclick=()=>verdict(false);
+$('nextBtn').onclick=nextCase;
+$('soundBtn').onclick=toggleSound;
+$('soundBtn').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggleSound();}};
+document.addEventListener('keydown',e=>{if(e.key==='1'&&!$('intro').classList.contains('active'))verdict(true);if(e.key==='2'&&!$('intro').classList.contains('active'))verdict(false);});
+if('speechSynthesis' in window){speechSynthesis.onvoiceschanged=()=>{};}
+updateHUD();
+</script>
+</body>
+</html>
