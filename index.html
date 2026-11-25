@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI SAFE — Детектор звонков</title>
+<style>
+:root{
+  --bg:#f4f8fb; --card:#ffffff; --ink:#1c2734; --muted:#6c7c8c; --line:#dfe8ef;
+  --cyan:#0ea5cd; --cyan-l:#e8f8fd; --brown:#b45309; --cream:#fff8ea;
+  --red:#c93a3a; --red-l:#fff0f0; --green:#4d7c0f; --green-l:#f1f9e8;
+  --shadow:0 16px 44px rgba(24,54,78,.10);
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:"Segoe UI",Arial,sans-serif}
+body{display:flex;justify-content:center;padding:18px}
+.game{width:min(1240px,100%);background:var(--card);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);overflow:hidden;position:relative}
+
+/* ---------- шапка ---------- */
+.top{display:flex;align-items:center;gap:14px;padding:16px 24px;border-bottom:1px solid var(--line);background:linear-gradient(90deg,#fff,#fbfdff)}
+.logo{display:flex;align-items:center;gap:11px;font-weight:800;letter-spacing:.4px}
+.logo svg{width:52px;height:52px;flex:none}
+.logo b{color:var(--cyan);font-size:19px}
+.logo small{display:block;color:var(--muted);font-size:11px;font-weight:600;letter-spacing:1.6px;margin-top:2px}
+.topSpacer{flex:1}
+.stat{display:flex;flex-direction:column;align-items:flex-end;line-height:1.15}
+.stat span{font-size:10px;letter-spacing:1.4px;color:var(--muted);font-weight:700;text-transform:uppercase}
+.stat b{font-size:22px;font-variant-numeric:tabular-nums}
+.hearts{font-size:19px;letter-spacing:2px}
+.iconBtn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 11px;cursor:pointer;color:var(--muted);font-size:14px}
+.iconBtn:hover{border-color:var(--cyan);color:var(--cyan)}
+.progressTop{height:5px;background:#edf3f7}
+.progressTop i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--cyan),#8de3f5);transition:width .35s}
+
+/* ---------- игровое поле ---------- */
+.field{display:grid;grid-template-columns:342px 1fr;gap:22px;padding:22px 24px 26px;align-items:start}
+.phone{background:linear-gradient(180deg,#ffffff,#f8fcff);border:1px solid var(--line);border-radius:20px;padding:20px;position:sticky;top:0}
+.incoming{text-align:center;font-size:11px;letter-spacing:2.6px;font-weight:800;color:var(--cyan);margin-bottom:16px;animation:pulse 1.5s infinite}
+@keyframes pulse{50%{opacity:.42}}
+.caller{display:flex;align-items:center;gap:14px}
+.avatar{width:62px;height:62px;border-radius:50%;display:grid;place-items:center;font-size:25px;background:var(--cyan-l);border:2px solid var(--cyan);flex:none}
+.callerName{font-size:22px;font-weight:800;line-height:1.15}
+.callerNum{font-size:13px;color:var(--muted);margin-top:5px;font-variant-numeric:tabular-nums}
+.wave{height:46px;display:flex;align-items:center;justify-content:center;gap:4px;margin:18px 0 6px}
+.wave i{width:4px;background:var(--cyan);border-radius:3px;opacity:.7;animation:wave 1s ease-in-out infinite alternate}
+@keyframes wave{to{height:8px;opacity:.35}}
+.timer{text-align:center;font-variant-numeric:tabular-nums;font-size:14px;color:var(--muted);font-weight:700}
+.victim{margin-top:18px;padding:12px 14px;background:var(--cream);border:1px solid #f0dfbc;border-radius:12px;font-size:13px;line-height:1.45}
+.victim b{display:block;color:var(--brown);font-size:10px;letter-spacing:1.3px;margin-bottom:3px}
+.legend{margin-top:16px;border-top:1px dashed var(--line);padding-top:14px;display:grid;gap:9px;font-size:12px;color:var(--muted)}
+.legend div{display:flex;align-items:center;gap:9px}
+.legend i{width:16px;height:16px;border-radius:5px;flex:none;display:block}
+.lgBad{background:#ffe1e1;border:2px solid var(--red)}
+.lgGood{background:#e6f5d6;border:2px solid var(--green)}
+.lgFalse{background:#eef2f5;border:2px solid #9aa8b5}
+
+.dialog{min-height:470px;display:flex;flex-direction:column}
+.dialogHead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+.dialogHead h2{margin:0;font-size:21px}
+.dialogHead span{font-size:12px;color:var(--muted)}
+.hint{background:var(--cyan-l);border:1px solid #cbeaf4;border-radius:12px;padding:12px 15px;font-size:14px;line-height:1.5;color:#155e73;margin-bottom:16px}
+.hint b{color:#0b4758}
+.transcript{flex:1;display:flex;flex-direction:column;gap:12px;min-height:290px}
+.bubble{align-self:flex-start;max-width:90%;background:#f7fafc;border:1px solid var(--line);border-radius:4px 16px 16px 16px;padding:13px 16px;font-size:17px;line-height:1.75;box-shadow:0 2px 8px rgba(20,50,70,.04);animation:appear .35s ease both}
+@keyframes appear{from{opacity:0;transform:translateY(8px)}}
+.bubble:before{content:"";display:block;font-size:9px;letter-spacing:1.4px;color:var(--muted);font-weight:800;margin-bottom:3px}
+.seg{border-radius:6px;padding:1px 3px;cursor:pointer;transition:.15s;border-bottom:2px dashed transparent}
+.seg:hover{background:#e7f6fb;border-bottom-color:var(--cyan)}
+.seg.foundBad{background:#ffe3e3;border-bottom:2px solid var(--red);color:#8f2020;font-weight:700}
+.seg.foundGood{background:#e9f7d9;border-bottom:2px solid var(--green);color:#3c6310;font-weight:700}
+.seg.false{background:#eef2f5;color:#9aa8b5;text-decoration:line-through;cursor:default}
+.bubble.done{opacity:.92}
+.controls{display:flex;gap:12px;align-items:center;margin-top:18px;flex-wrap:wrap}
+.btn{border:0;border-radius:12px;padding:13px 22px;font:700 15px "Segoe UI",Arial,sans-serif;cursor:pointer;transition:.18s}
+.btn.primary{background:var(--cyan);color:#fff;box-shadow:0 6px 16px rgba(14,165,205,.28)}
+.btn.primary:hover{background:#0b8fb2;transform:translateY(-1px)}
+.btn.ghost{background:#fff;color:var(--muted);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--cyan);color:var(--cyan)}
+.btn.bad{background:var(--red);color:#fff}
+.btn.bad:hover{background:#a92f2f}
+.btn.good{background:var(--green);color:#fff}
+.btn.good:hover{background:#3f6910}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.verdictBox{display:none;margin-top:18px;padding:17px;border:1px solid var(--line);border-radius:16px;background:#fbfdff}
+.verdictBox.show{display:block;animation:appear .3s ease both}
+.verdictBox p{margin:0 0 13px;font-weight:700}
+.verdictBtns{display:flex;gap:12px;flex-wrap:wrap}
+
+/* ---------- модальные экраны ---------- */
+.screen{position:absolute;inset:0;z-index:20;background:rgba(244,248,251,.97);display:none;padding:34px;overflow:auto}
+.screen.show{display:flex;align-items:center;justify-content:center}
+.screenCard{max-width:820px;width:100%;text-align:center;background:#fff;border:1px solid var(--line);border-radius:22px;padding:38px 42px;box-shadow:var(--shadow)}
+.screenCard .bigRobot{width:120px;height:120px;margin:0 auto 10px}
+.screenCard h1{font-size:36px;margin:8px 0 12px;color:var(--ink)}
+.screenCard h1 em{font-style:normal;color:var(--cyan)}
+.screenCard p{font-size:16px;line-height:1.65;color:var(--muted);margin:0 auto 20px;max-width:660px}
+.rules{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:24px 0;text-align:left}
+.rule{background:var(--cyan-l);border:1px solid #cbeaf4;border-radius:14px;padding:15px}
+.rule b{display:block;color:#0b6d87;font-size:14px;margin-bottom:5px}
+.rule span{font-size:13px;color:#33697b;line-height:1.45}
+.feedback{text-align:left;background:#fbfdff;border:1px solid var(--line);border-radius:16px;padding:20px;margin:18px 0}
+.feedback h3{margin:0 0 10px;font-size:19px}
+.feedback h3.ok{color:var(--green)} .feedback h3.no{color:var(--red)}
+.feedback .why{font-size:15px;line-height:1.6;color:#415263;margin:0 0 14px}
+.flagList{display:grid;gap:7px;margin-bottom:12px}
+.flagRow{font-size:13px;padding:8px 11px;border-radius:9px;background:#f5f8fa;color:#40515f;display:flex;gap:9px;align-items:flex-start}
+.flagRow.miss{background:var(--red-l);color:#8f2020}
+.flagRow.good{background:var(--green-l);color:#3c6310}
+.delta{font-weight:800;color:var(--cyan)}
+.statsGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:22px 0}
+.statCard{background:#f7fafc;border:1px solid var(--line);border-radius:14px;padding:14px}
+.statCard b{display:block;font-size:26px;color:var(--cyan)}
+.statCard span{font-size:11px;color:var(--muted);letter-spacing:.8px;text-transform:uppercase}
+.rank{display:inline-block;background:var(--cream);border:1px solid #f0dfbc;color:var(--brown);border-radius:999px;padding:8px 18px;font-weight:800;font-size:14px;margin-bottom:14px}
+@media(max-width:900px){
+ .field{grid-template-columns:1fr}.phone{position:static}.rules{grid-template-columns:1fr}
+ .statsGrid{grid-template-columns:repeat(2,1fr)}
+ .screenCard{padding:26px 20px}.screenCard h1{font-size:28px}
+}
+</style>
+</head>
+<body>
+<div class="game" id="game">
+  <div class="top">
+    <div class="logo">
+      <svg viewBox="0 0 100 100" aria-hidden="true">
+        <path d="M50 10V26" stroke="#b45309" stroke-width="7" stroke-linecap="round"/>
+        <circle cx="50" cy="10" r="7" fill="#b45309"/>
+        <rect x="15" y="26" width="70" height="60" rx="17" fill="#fff8ea" stroke="#b45309" stroke-width="6"/>
+        <circle cx="35" cy="52" r="6" fill="#b45309"/><circle cx="65" cy="52" r="6" fill="#b45309"/>
+        <path d="M38 70Q50 80 62 70" stroke="#4d7c0f" stroke-width="5" fill="none" stroke-linecap="round"/>
+      </svg>
+      <div><b>AI SAFE</b><small>ДЕТЕКТОР ЗВОНКОВ</small></div>
+    </div>
+    <div class="topSpacer"></div>
+    <div class="stat"><span>Счёт</span><b id="score">0</b></div>
+    <div class="stat"><span>Жизни</span><b class="hearts" id="hearts">♥♥♥</b></div>
+    <div class="stat"><span>Звонок</span><b id="round">1/8</b></div>
+    <button class="iconBtn" id="soundBtn" title="Звук">🔊</button>
+  </div>
+  <div class="progressTop"><i id="progress"></i></div>
+
+  <div class="field">
+    <aside class="phone">
+      <div class="incoming">● ВХОДЯЩИЙ ЗВОНОК</div>
+      <div class="caller">
+        <div class="avatar" id="avatar">☎</div>
+        <div><div class="callerName" id="callerName">—</div><div class="callerNum" id="callerNum">—</div></div>
+      </div>
+      <div class="wave" id="wave"></div>
+      <div class="timer" id="timer">00:00</div>
+      <div class="victim"><b>НА ДРУГОМ КОНЦЕ</b><span id="victim">—</span></div>
+      <div class="legend">
+        <div><i class="lgBad"></i> красный флаг — приём мошенника</div>
+        <div><i class="lgGood"></i> зелёный сигнал — признак «своего»</div>
+        <div><i class="lgFalse"></i> ложная тревога — –25 очков</div>
+      </div>
+    </aside>
+
+    <main class="dialog">
+      <div class="dialogHead"><h2 id="dialogTitle">Разбор звонка</h2><span id="revealCount">Реплик: 0</span></div>
+      <div class="hint" id="hint"><b>Твоя задача:</b> слушай реплики и нажимай на подозрительные фразы. После последней реплики выбери вердикт: «Мошенник» или «Свой».</div>
+      <div class="transcript" id="transcript"></div>
+      <div class="controls">
+        <button class="btn primary" id="nextBtn">Слушать дальше ▶</button>
+        <button class="btn ghost" id="restartBtn">↻ Новая смена</button>
+      </div>
+      <div class="verdictBox" id="verdictBox">
+        <p>Кто на другом конце провода?</p>
+        <div class="verdictBtns">
+          <button class="btn bad" id="scamBtn">🚩 Мошенник — блокировать</button>
+          <button class="btn good" id="legitBtn">✅ Свой — пропустить</button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- стартовый экран -->
+  <div class="screen show" id="startScreen">
+    <div class="screenCard">
+      <svg class="bigRobot" viewBox="0 0 100 100" aria-hidden="true">
+        <path d="M50 10V26" stroke="#b45309" stroke-width="7" stroke-linecap="round"/><circle cx="50" cy="10" r="7" fill="#b45309"/>
+        <rect x="15" y="26" width="70" height="60" rx="17" fill="#fff8ea" stroke="#b45309" stroke-width="6"/>
+        <circle cx="35" cy="52" r="6" fill="#b45309"/><circle cx="65" cy="52" r="6" fill="#b45309"/>
+        <path d="M38 70Q50 80 62 70" stroke="#4d7c0f" stroke-width="5" fill="none" stroke-linecap="round"/>
+      </svg>
+      <h1>Ты — <em>AI Safe бот</em>. Тебе звонят.</h1>
+      <p>Ты защищаешь людей от телефонных мошенников. В эфире 8 звонков: одни — аферисты с хитрыми приёмами, другие — настоящие сотрудники банка, полиции и служб. Учишься отличать их по словам, а не по голосу.</p>
+      <div class="rules">
+        <div class="rule"><b>1. Слушай и отмечай</b><span>Нажимай на красные флаги — приёмы обмана. У настоящих сотрудников ищи зелёные сигналы.</span></div>
+        <div class="rule"><b>2. Прими решение</b><span>После последней реплики выбери: заблокировать звонок или пропустить его.</span></div>
+        <div class="rule"><b>3. Не ошибайся</b><span>Верный вердикт — +120. Неверный — –100 и одна жизнь. Всего 3 жизни.</span></div>
+      </div>
+      <button class="btn primary" id="startBtn">Начать смену ▶</button>
+    </div>
+  </div>
+
+  <!-- экран разбора -->
+  <div class="screen" id="reviewScreen">
+    <div class="screenCard">
+      <h3 id="reviewTitle" style="margin-top:0;font-size:26px">Разбор звонка</h3>
+      <div class="feedback" id="feedback"></div>
+      <button class="btn primary" id="nextCallBtn">Следующий звонок ▶</button>
+    </div>
+  </div>
+
+  <!-- финал -->
+  <div class="screen" id="endScreen">
+    <div class="screenCard">
+      <div class="rank" id="rank">СТАЖЁР</div>
+      <h1 id="endTitle">Смена завершена</h1>
+      <p id="endText">Ты прошёл все звонки.</p>
+      <div class="statsGrid" id="endStats"></div>
+      <button class="btn primary" id="againBtn">Играть снова ↻</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================= данные звонков ================= */
+const CALLS = [
+ { type:"scam", name:"«Сын»", num:"+7 999 123-45-67", who:"Анна Петровна, 68 лет", icon:"😟",
+   lines:[
+    [{t:"Мам, я попал в аварию,"},{t:" срочно нужны деньги",bad:1},{t:"."}],
+    [{t:"Переведи "},{t:"150 000 ₽ на карту",bad:1},{t:", "},{t:"пока никто не узнал",bad:1},{t:"."}],
+    [{t:"Только "},{t:"не звони мне",bad:1},{t:" и не рассказывай папе — это важно."}]
+   ],
+   why:"Классическая схема «родственник в беде». Срочность, крупная сумма и запрет проверять — три красных флага сразу. Настоящий сын не попросит держать это в секрете. Перезвони ему самому по старому номеру.",
+   flags:[{t:"срочность и давление",k:"срочно"},{t:"перевод крупной суммы",k:"150 000"},{t:"просьба не проверять",k:"не звони"}] },
+
+ { type:"scam", name:"«Служба безопасности»", num:"+7 495 770-11-22", who:"Игорь Васильевич, 54 года", icon:"🏦",
+   lines:[
+    [{t:"Здравствуйте! Это служба безопасности банка. "},{t:"На вас оформляют кредит",bad:1},{t:"."}],
+    [{t:"Назовите "},{t:"код из СМС",bad:1},{t:", чтобы мы его отменили."}],
+    [{t:"Только "},{t:"не кладите трубку",bad:1},{t:" — это займёт минуту."}]
+   ],
+   why:"Настоящий банк никогда не спрашивает коды из СМС — они нужны мошеннику, чтобы оформить кредит или перевод. Фраза «не кладите трубку» лишает человека возможности перезвонить и проверить.",
+   flags:[{t:"угроза оформленного кредита",k:"кредит"},{t:"просьба назвать код из СМС",k:"код из СМС"},{t:"запрет положить трубку",k:"не кладите"}] },
+
+ { type:"scam", name:"«Курьер маркетплейса»", num:"+7 903 442-18-09", who:"Мария Сергеевна, 41 год", icon:"📦",
+   lines:[
+    [{t:"Ваша посылка задержана. Нужно "},{t:"подтвердить данные карты",bad:1},{t:"."}],
+    [{t:"Перейдите "},{t:"по ссылке в СМС",bad:1},{t:" и "},{t:"оплатите 199 ₽",bad:1},{t:" за доставку."}],
+    [{t:"Иначе заказ вернётся продавцу — "},{t:"сегодня последний шанс",bad:1},{t:"."}]
+   ],
+   why:"Доставка уже оплачена — дополнительных платежей не бывает. Ссылка из СМС ведёт на поддельный сайт, где просят данные карты. Проверяй заказ только в приложении маркетплейса.",
+   flags:[{t:"просьба данных карты",k:"данные карты"},{t:"ссылка из СМС",k:"по ссылке"},{t:"доплата и дедлайн",k:"199"}] },
+
+ { type:"scam", name:"«Полиция»", num:"+7 926 008-43-91", who:"Пётр Ильич, 61 год", icon:"🚓",
+   lines:[
+    [{t:"Это отдел по борьбе с киберпреступностью. "},{t:"Вам грозит арест",bad:1},{t:"."}],
+    [{t:"Соберите деньги на "},{t:"«гарантийный счёт»",bad:1},{t:" — это обязательно."}],
+    [{t:"И "},{t:"никому не говорите",bad:1},{t:", идёт следствие."}]
+   ],
+   why:"«Гарантийных счетов» не существует — это выдумка. Полиция не требует переводов по телефону и не просит хранить разговор в тайне. Угроза ареста нужна, чтобы выбить деньги у напуганного человека.",
+   flags:[{t:"угроза ареста",k:"арест"},{t:"выдуманный гарантийный счёт",k:"гарантийный счёт"},{t:"требование тайны",k:"никому не говорите"}] },
+
+ { type:"scam", name:"«Внук Дима»", num:"+7 925 611-70-04", who:"Тамара Ивановна, 74 года", icon:"👴",
+   lines:[
+    [{t:"Деда, это я, Дима. "},{t:"Голос хрипит, я простужен",bad:1},{t:"..."}],
+    [{t:"Я на телефоне друга, "},{t:"номер новый",bad:1},{t:"."}],
+    [{t:" "},{t:"Переведи 80 тысяч",bad:1},{t:" на него, я верну вечером."}]
+   ],
+   why:"Дипфейк может скопировать голос, но не историю ваших разговоров. «Простужен» — отговорка, почему голос звучит необычно. Новый номер + просьба о переводе = повод набрать внуку самому.",
+   flags:[{t:"оправдание необычного голоса",k:"голос хрипит"},{t:"новый номер",k:"номер новый"},{t:"неожиданная просьба о деньгах",k:"Переведи"}] },
+
+ { type:"scam", name:"«Аналитик фонда»", num:"+7 968 310-55-12", who:"Сергей Павлович, 47 лет", icon:"📈",
+   lines:[
+    [{t:"У меня для вас "},{t:"закрытая сделка",bad:1},{t:" с "},{t:"доходностью 40% в день",bad:1},{t:"."}],
+    [{t:"Нужно "},{t:"установить приложение",bad:1},{t:" для торговли и "},{t:"перевести 50 000 ₽",bad:1},{t:"."}],
+    [{t:"Это "},{t:"последний шанс",bad:1},{t:" сегодня."}]
+   ],
+   why:"Закрытые сделки и доходность 40% в день — маркеры финансовой пирамиды. Установка стороннего приложения и перевод «инвестиций» заканчиваются потерей денег. Проверять компании нужно через реестр ЦБ.",
+   flags:[{t:"нереальная доходность",k:"40%"},{t:"стороннее приложение",k:"установить приложение"},{t:"перевод средств и цейтнот",k:"последний шанс"}] },
+
+ { type:"legit", name:"«Банк · Антифрод»", num:"+7 100 000-00-00", who:"Анна Петровна, 68 лет", icon:"🛡️",
+   lines:[
+    [{t:"Здравствуйте, Анна Петровна. Это служба безопасности банка, система «Антифрод»."}],
+    [{t:"Мы заблокировали покупку, которой вы не совершали. "},{t:"Проверьте операции в приложении",good:1},{t:"."}],
+    [{t:" "},{t:"Мы не просим коды и пароли",good:1},{t:". "},{t:"Если сомневаетесь, "},{t:"перезвоните сами по номеру на карте",good:1},{t:"."}]
+   ],
+   why:"Это настоящий сотрудник: обращается по имени, не просит коды, не торопит и предлагает独立的 проверку. Именно так выглядит работа антифрода — он защищает деньги, а не выманивает их.",
+   flags:["называет имя и сервис","не просит коды и пароли","предлагает перезвонить по номеру на карте"] },
+
+ { type:"legit", name:"«Участковый Иванов»", num:"+7 495 234-76-10", who:"Игорь Васильевич, 54 года", icon:"👮",
+   lines:[
+    [{t:"Здравствуйте. Это участковый уполномоченный Иванов И. И. Ваше заявление принято, номер регистрации..."}],
+    [{t:"Напоминаю: по делу "},{t:"ничего платить не нужно",good:1},{t:". Повестку вручат лично."}],
+    [{t:"По вопросам "},{t:"перезвоните в отдел по номеру на сайте МВД",good:1},{t:"."}]
+   ],
+   why:"Настоящий сотрудник не просит денег и не скрывается за угрозами. Он называет должность, фамилию и предлагает проверить информацию через официальный сайт — это зелёные сигналы.",
+   flags:["представился по должности","сказал, что платить не нужно","посоветовал официальный канал проверки"] },
+
+ { type:"legit", name:"«Поликлиника № 3»", num:"+7 495 118-20-33", who:"Мария Сергеевна, 41 год", icon:"🏥",
+   lines:[
+    [{t:"Здравствуйте! Это поликлиника. Напоминаем о приёме терапевта завтра в 10:30."}],
+    [{t:"Если не можете прийти — "},{t:"отмените запись в личном кабинете",good:1},{t:" или по телефону регистратуры."}],
+    [{t:" "},{t:"Мы не просим переводы и данные карты",good:1},{t:". Хорошего дня!"}]
+   ],
+   why:"Обычное напоминание: конкретное время, способ отмены через личный кабинет и никаких денег. Здесь нечего блокировать — это полезный звонок, который стоит пропустить.",
+   flags:["конкретная деталь приёма","отмена через личный кабинет","нет просьб о деньгах"] },
+
+ { type:"legit", name:"«Служба доставки»", num:"+7 800 555-12-12", who:"Сергей Павлович, 47 лет", icon:"🚚",
+   lines:[
+    [{t:"Здравствуйте! Это служба доставки. Ваш заказ приедет завтра с 10 до 14."}],
+    [{t:"Если хотите изменить адрес — "},{t:"сделайте это в приложении",good:1},{t:" или в чате заказа."}],
+    [{t:"Оплата уже прошла, "},{t:"дополнительно ничего платить не нужно",good:1},{t:"."}]
+   ],
+   why:"Обычный сервисный звонок: конкретный интервал, изменение через приложение и прямое указание, что доплата не требуется. Мошенники наоборот создают проблемы, которых нет.",
+   flags:["конкретный интервал доставки","изменение через приложение","нет дополнительной оплаты"] }
+];
+
+/* ================= состояние ================= */
+const $ = id => document.getElementById(id);
+let deck=[], idx=0, score=0, lives=3, revealed=0, current=null;
+let found=new Set(), faults=new Set(), seconds=0, tick=null, sound=true, audio=null, gameOver=false;
+
+function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function beep(freq=620,dur=.09,type='sine'){
+  if(!sound)return;
+  try{ audio=audio||new (window.AudioContext||window.webkitAudioContext)();
+    const o=audio.createOscillator(),g=audio.createGain();
+    o.type=type;o.frequency.value=freq;g.gain.setValueAtTime(.07,audio.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+dur);
+    o.connect(g);g.connect(audio.destination);o.start();o.stop(audio.currentTime+dur);
+  }catch(e){}
+}
+function updateHUD(){
+  $('score').textContent=score;
+  $('hearts').textContent='♥'.repeat(lives)+'♡'.repeat(3-lives);
+  $('round').textContent=(idx+1)+'/'+deck.length;
+  $('progress').style.width=(idx/deck.length*100)+'%';
+}
+function newDeck(){
+  const scams=shuffle(CALLS.filter(c=>c.type==='scam')).slice(0,5);
+  const legit=shuffle(CALLS.filter(c=>c.type==='legit')).slice(0,3);
+  return shuffle([...scams,...legit]);
+}
+function startGame(){
+  deck=newDeck();idx=0;score=0;lives=3;gameOver=false;
+  $('startScreen').classList.remove('show');$('endScreen').classList.remove('show');$('reviewScreen').classList.remove('show');
+  beep(880,.12);loadCall();
+}
+function loadCall(){
+  current=deck[idx];revealed=0;found=new Set();faults=new Set();seconds=0;
+  $('callerName').textContent=current.name;
+  $('callerNum').textContent=current.num;
+  $('victim').textContent=current.who;
+  $('avatar').textContent=current.icon;
+  $('revealCount').textContent='Реплик: 0 / '+current.lines.length;
+  $('transcript').innerHTML='';
+  $('verdictBox').classList.remove('show');
+  $('nextBtn').disabled=false;$('nextBtn').textContent='Слушать дальше ▶';
+  $('hint').innerHTML='<b>Твоя задача:</b> слушай реплики и нажимай на подозрительные фразы. После последней реплики выбери вердикт: «Мошенник» или «Свой».';
+  $('dialogTitle').textContent='Разбор звонка';
+  clearInterval(tick);
+  tick=setInterval(()=>{seconds++;$('timer').textContent=String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0');},1000);
+  $('timer').textContent='00:00';
+  updateHUD();beep(520,.07);
+  renderWave();
+}
+function renderWave(){
+  $('wave').innerHTML=Array.from({length:19},(_,i)=>`<i style="height:${8+Math.abs(Math.sin(i*1.7))*30}px;animation-delay:${i*0.06}s"></i>`).join('');
+}
+function renderTranscript(){
+  $('transcript').innerHTML=current.lines.slice(0,revealed).map((line,li)=>
+    `<div class="bubble"><span class="who">${current.name}:</span><br>`+
+    line.map((seg,si)=>{
+      const key=li+':'+si;
+      let cls='seg';
+      if(faults.has(key)) cls+=' false';
+      else if(found.has(key)) cls+= seg.bad?' foundBad':' foundGood';
+      return `<span class="${cls}" data-li="${li}" data-si="${si}">${seg.t}</span>`;
+    }).join('')+'</div>'
+  ).join('');
+  $('revealCount').textContent='Реплик: '+revealed+' / '+current.lines.length;
+}
+function nextLine(){
+  if(revealed<current.lines.length){
+    revealed++;renderTranscript();beep(660,.06);
+    if(revealed===current.lines.length){
+      $('nextBtn').textContent='Принять решение ✓';
+      $('hint').innerHTML='<b>Все реплики услышаны.</b> Проверь отмеченные фразы и выбери вердикт ниже.';
+    }
+  } else {
+    showVerdict();
+  }
+}
+$('transcript').addEventListener('click',e=>{
+  const el=e.target.closest('.seg');if(!el||faults.has(el.dataset.li+':'+el.dataset.si))return;
+  const seg=current.lines[+el.dataset.li][+el.dataset.si], key=el.dataset.li+':'+el.dataset.si;
+  if(seg.bad||seg.good){
+    if(found.has(key)){found.delete(key);score-= seg.bad?15:15;}
+    else{found.add(key);score+=25;beep(seg.bad?420:860,.08);}
+  }else{
+    faults.add(key);score-=25;beep(180,.12,'square');
+    $('hint').innerHTML='<b>Ложная тревога!</b> Эта фраза обычная. –25 очков. Смотри на давление, просьбы о деньгах, кодах и ссылках.';
+  }
+  updateHUD();renderTranscript();
+});
+function showVerdict(){
+  clearInterval(tick);
+  $('verdictBox').classList.add('show');
+  $('nextBtn').disabled=true;
+  $('hint').innerHTML='<b>Решение принято?</b> Выбери, кто звонил: мошенник или свой человек.';
+  beep(900,.14);
+}
+function choose(verdict){
+  const correct=(verdict==='scam')===(current.type==='scam');
+  const badTotal=current.lines.flat().filter(s=>s.bad).length;
+  const goodTotal=current.lines.flat().filter(s=>s.good).length;
+  let foundBad=0,foundGood=0;
+  found.forEach(k=>{const [li,si]=k.split(':').map(Number);const s=current.lines[li][si];if(s.bad)foundBad++;if(s.good)foundGood++;});
+  let delta=correct?120:-100;
+  if(!correct)lives--;
+  const timeBonus=correct?Math.max(0,30-seconds):0;
+  delta+=timeBonus;
+  score+=delta;
+  if(score<0)score=0;
+  $('verdictBox').classList.remove('show');
+  $('reviewTitle').textContent=correct?'Вердикт верный ✓':'Вердикт неверный ✕';
+  const foundSegs=[...found].map(k=>{const [li,si]=k.split(':').map(Number);return current.lines[li][si];});
+  const rows=current.flags.map(f=>{
+    const label=typeof f==='string'?f:f.t;
+    const isFound=current.type==='legit'?true:foundSegs.some(s=>s.bad&&s.t.toLowerCase().includes(f.k.toLowerCase()));
+    const color=current.type==='legit'?'good':(isFound?'':'miss');
+    return `<div class="flagRow ${color}">${current.type==='legit'?'✅':(isFound?'🚩':'⚠')} ${label}${current.type==='scam'&&!isFound?' — не отмечено':''}</div>`;
+  }).join('');
+  $('feedback').innerHTML=
+    `<h3 class="${correct?'ok':'no'}">${correct?'Ты защитил человека':'Звонок пропущен ошибкой'} · ${delta>=0?'+':''}${delta} очков</h3>
+     <p class="why">${current.why}</p>
+     <div class="flagList">${rows}</div>
+     <div style="font-size:13px;color:#6c7c8c">Отмечено флагов: ${foundBad} из ${badTotal}${goodTotal?' · зелёных сигналов: '+foundGood+' из '+goodTotal:''} · ложных тревог: ${faults.size} · время: ${seconds} сек</div>`;
+  $('reviewScreen').classList.add('show');
+  updateHUD();beep(correct?780:220,.18,correct?'sine':'sawtooth');
+}
+function nextCall(){
+  $('reviewScreen').classList.remove('show');
+  if(lives<=0){endGame('Слишком много ошибок. Связь с абонентами потеряна.',true);return;}
+  idx++;
+  if(idx>=deck.length){endGame('Ты выслушал все 8 звонков и почти никого не подвёл.',false);return;}
+  loadCall();
+}
+function endGame(text,failed){
+  gameOver=true;clearInterval(tick);
+  let rank='СТАЖЁР';
+  if(score>=1100)rank='ЗАЩИТНИК AI SAFE';else if(score>=800)rank='АНАЛИТИК';else if(score>=450)rank='ОПЕРАТОР';
+  $('rank').textContent=rank;
+  $('endTitle').textContent=failed?'Смена прервана':'Смена завершена';
+  $('endText').textContent=text;
+  const played=failed?idx+1:idx;
+  $('endStats').innerHTML=`
+    <div class="statCard"><b>${score}</b><span>очков</span></div>
+    <div class="statCard"><b>${played}</b><span>звонков</span></div>
+    <div class="statCard"><b>${lives}</b><span>жизней осталось</span></div>
+    <div class="statCard"><b>${Math.max(0,3-lives)}</b><span>ошибок</span></div>`;
+  $('endScreen').classList.add('show');beep(560,.3);
+}
+$('startBtn').onclick=startGame;
+$('againBtn').onclick=startGame;
+$('restartBtn').onclick=()=>{if(confirm('Начать смену заново?'))startGame();};
+$('nextBtn').onclick=nextLine;
+$('scamBtn').onclick=()=>choose('scam');
+$('legitBtn').onclick=()=>choose('legit');
+$('nextCallBtn').onclick=nextCall;
+$('soundBtn').onclick=()=>{sound=!sound;$('soundBtn').textContent=sound?'🔊':'🔇';if(sound)beep(700,.08);};
+document.addEventListener('click',e=>{if(e.target.tagName==='BUTTON')e.target.blur();});
+addEventListener('keydown',e=>{
+  if($('startScreen').classList.contains('show')&&e.code==='Enter'){startGame();return;}
+  if(!$('reviewScreen').classList.contains('show')&&!$('endScreen').classList.contains('show')){
+    if(e.code==='Space'){e.preventDefault();nextLine();}
+  }
+  if($('reviewScreen').classList.contains('show')&&(e.code==='Enter'||e.code==='Space')){e.preventDefault();nextCall();}
+});
+</script>
+</body>
+</html>
